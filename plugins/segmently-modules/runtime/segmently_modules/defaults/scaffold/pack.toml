@@ -1,0 +1,18 @@
+## segmently-modules pack "${id}". Reference: docs/writing-a-pack.md in the segmently-modules repository.
+## A pack is a config layer (roles, fields, [[code_map]] rules, hooks) plus role templates and
+## agent skills; plain `segmently-modules lint` checks it.
+id = ${id_toml}
+version = "0.1.0"
+priority = ${priority}
+description = ${description_toml}
+${tables}
+## More roles and skills: copy a block, rename it and add its file.
+# [roles.NAME]
+# order = 200
+# standard = false            # true: `segmently-modules create` writes roles/NAME.md for every module
+# description = "What a NAME needs to know about a module"
+# template = "roles/NAME.md"
+#
+# [skills.NAME]
+# path = "skills/NAME"         # a directory with SKILL.md (the Agent Skills format)
+# reads_roles = ["NAME"]

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "segmently-modules-qa",
+  "version": "0.2.0-dev.h7ea7c03a",
+  "description": "The Segmently Modules acceptance-criteria skills: a task's criteria before the code, and a module's acceptance baseline",
+  "author": {
+    "name": "Segmently Modules maintainers"
+  },
+  "keywords": [
+    "segmently-modules",
+    "module-registry",
+    "documentation",
+    "agent-skills",
+    "qa",
+    "acceptance-criteria"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "segmently-modules",
+  "version": "0.2.0-dev.h7ea7c03a",
+  "description": "Module-registry skills for coding agents — find, read, update, create, split and lint module docs, start them from existing code or adopt a registry — with the segmently-modules CLI they run",
+  "author": {
+    "name": "Segmently Modules maintainers"
+  },
+  "keywords": [
+    "segmently-modules",
+    "module-registry",
+    "documentation",
+    "agent-skills",
+    "modules",
+    "cli"
+  ],
+  "homepage": "https://github.com/segmently-ai/segmently-modules",
+  "repository": "https://github.com/segmently-ai/segmently-modules",
+  "license": "MIT"
+}

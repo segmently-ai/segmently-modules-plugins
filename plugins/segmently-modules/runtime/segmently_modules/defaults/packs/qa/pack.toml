@@ -1,0 +1,20 @@
+# The built-in pack "qa": an acceptance-baseline role and skills that write acceptance
+# criteria. Enable it in .segmently-modules/config.toml: [packs] builtin = ["qa"].
+# Its version is the engine version; a repository pack with the id "qa" replaces it.
+id = "qa"
+description = "An acceptance-baseline role and skills that write acceptance criteria"
+
+[roles.qa_acceptance]
+order = 25
+standard = false
+applies_when = "qa"               # segmently-modules create --tag qa (or --role qa_acceptance) adds the doc
+description = "What must not break: acceptance criteria with stable ids, by priority"
+template = "roles/qa_acceptance.md"
+
+[skills.qa-acceptance]
+path = "skills/qa-acceptance"
+reads_roles = ["qa", "qa_acceptance"]
+
+[skills.qa-acceptance-baseline]
+path = "skills/qa-acceptance-baseline"
+reads_roles = ["qa", "qa_acceptance"]

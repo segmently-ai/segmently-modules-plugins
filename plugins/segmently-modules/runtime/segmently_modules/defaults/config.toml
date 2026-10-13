@@ -1,0 +1,83 @@
+# segmently-modules core defaults. Teams override in .segmently-modules/config.toml, packs in .segmently-modules/packs/*/pack.toml.
+schema_version = 1
+
+[paths]
+modules_dir = "modules"
+registry = "modules/registry.json"
+registry_layout = "single"   # or "per-module": <modules_dir>/<name>/<module_entry> + generated index
+module_doc = "MODULE.md"
+module_entry = "module.json"
+proposals_dir = ".segmently-modules/proposals"   # proposals queue (pipelines); done/ keeps processed files
+
+[registry]
+statuses = ["active", "draft", "planned", "temporary"]
+relations = ["depends-on", "complements", "implemented-in", "shares-contract", "superseded-by"]
+stub_pattern = 'status:?\**\s*\**(retired|merged|migrated|superseded)'
+dir_whitelist = []
+updated_at_path = ""        # e.g. "metadata.last_updated": stamped on every registry write
+
+[budgets]
+module_doc_split_signal = 600
+module_doc_hard_stop = 1000
+role_doc_max = 600
+keywords_soft = 40
+keyword_shared_warn = 4
+skill_split_signal = 9000
+pack_split_signal = 64000
+
+[match]
+keyword_weight = 3
+combination_weight = 2
+negative_weight = -5
+min_score = 3
+top = 8
+
+[lint]
+fail_on = "error"
+component_table_heading = "EXISTING Components"
+drift_severity = "warning"     # MS050 (lint --changed): code changed, no doc of its module
+overlap_severity = "warning"   # MS053: two [[code_map]] rules route one file to two modules
+link_severity = "warning"      # MS041: a link in a registered doc whose target is missing
+
+[create]
+min_keywords = 5              # top-level modules; a child needs at least 1
+description_min = 20
+description_max = 200
+default_status = "planned"
+
+[coverage]
+# include = ["**"] is the built-in default (not set here: arrays merge by appending, so a
+# default "**" could never be narrowed); a team `include` replaces it.
+exclude = []                  # globs; the modules dir, the config dir and dotfiles never count
+# doc_only = []               # modules that own no code on purpose: lint MS054 leaves them alone
+
+[ci]
+fail_on = "warning"           # segmently-modules ci: lint and drift fail at this severity (--fail-on)
+base = "HEAD"                 # drift is measured against this ref; in CI pass the target branch
+# coverage_fail_under = 80    # unset: the coverage step only reports (--fail-under)
+
+[init]
+exclude = []                  # globs the init file set leaves out (preflight, map, confirm)
+co_change_commits = 500       # init map: how many recent commits the co-change signal reads; 0 = off
+max_parallel = 4              # init run / the module-init skill: work items written at a time
+routing_min_hit_rate = 0.8    # init verify / eval routing: the lowest routing hit rate that passes
+
+[roles.developer]
+order = 10
+standard = true
+description = "What to know when changing the module's code"
+
+[roles.qa]
+order = 20
+standard = true
+description = "How to test the module; test patterns"
+
+[roles.po]
+order = 30
+standard = true
+description = "Product meaning: the jobs the module serves, their conditions and its boundaries"
+
+[roles.architect]
+order = 40
+standard = true
+description = "Design, boundaries and relationships with other modules"

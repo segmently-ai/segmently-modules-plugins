@@ -1,0 +1,39 @@
+# The built-in pack "core": agent skills that find, read, update, create, split and lint module
+# docs, start them from existing code and adopt an existing registry through the segmently-modules CLI.
+# Enable it in .segmently-modules/config.toml: [packs] builtin = ["core"]. Its version is the engine
+# version; a repository pack with the id "core" replaces it.
+id = "core"
+description = "Agent skills that find, read, update, create, split and lint module docs, start them from existing code and adopt an existing registry"
+
+[skills.module-scout]
+path = "skills/module-scout"
+
+[skills.module-discover]
+path = "skills/module-discover"
+
+[skills.module-research]
+path = "skills/module-research"
+
+[skills.module-sync]
+path = "skills/module-sync"
+
+[skills.module-roles]
+path = "skills/module-roles"
+
+[skills.module-create]
+path = "skills/module-create"
+
+[skills.module-split]
+path = "skills/module-split"
+
+[skills.module-lint]
+path = "skills/module-lint"
+
+[skills.module-init]
+path = "skills/module-init"
+
+[skills.module-adopt]
+path = "skills/module-adopt"
+
+[skills.module-assistant]
+path = "skills/module-assistant"

@@ -1,0 +1,24 @@
+{
+  "name": "segmently-modules-dev",
+  "owner": {
+    "name": "Segmently Modules maintainers"
+  },
+  "description": "The Segmently Modules plugins, dev channel: every change before a release",
+  "plugins": [
+    {
+      "name": "segmently-modules",
+      "source": "./plugins/segmently-modules",
+      "description": "Module-registry skills for coding agents — find, read, update, create, split and lint module docs, start them from existing code or adopt a registry — with the segmently-modules CLI they run"
+    },
+    {
+      "name": "segmently-modules-qa",
+      "source": "./plugins/segmently-modules-qa",
+      "description": "The Segmently Modules acceptance-criteria skills: a task's criteria before the code, and a module's acceptance baseline"
+    },
+    {
+      "name": "segmently-modules-ui",
+      "source": "./plugins/segmently-modules-ui",
+      "description": "The Segmently Modules designer skill: prototypes, audits and reviews UI work against the designer docs of the modules it touches"
+    }
+  ]
+}
