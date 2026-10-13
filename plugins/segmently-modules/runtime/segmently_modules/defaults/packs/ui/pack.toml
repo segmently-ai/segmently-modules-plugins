@@ -1,0 +1,17 @@
+# The built-in pack "ui": a designer role for modules with a user interface and the designer
+# skill that prototypes, audits and reviews UI work against it. Enable it in
+# .segmently-modules/config.toml: [packs] builtin = ["ui"].
+# Its version is the engine version; a repository pack with the id "ui" replaces it.
+id = "ui"
+description = "A designer role for UI modules and a skill that prototypes, audits and reviews UI work against it"
+
+[roles.designer]
+order = 50
+standard = false
+applies_when = "ui"               # segmently-modules create --tag ui (or --role designer) adds the doc
+description = "The UX rules a change to the module's user interface must keep"
+template = "roles/designer.md"
+
+[skills.designer]
+path = "skills/designer"
+reads_roles = ["designer"]

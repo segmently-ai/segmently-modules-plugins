@@ -1,0 +1,22 @@
+{
+  "name": "segmently-modules-qa",
+  "version": "0.2.0",
+  "description": "The Segmently Modules acceptance-criteria skills: a task's criteria before the code, and a module's acceptance baseline",
+  "author": {
+    "name": "Segmently Modules maintainers"
+  },
+  "keywords": [
+    "segmently-modules",
+    "module-registry",
+    "documentation",
+    "agent-skills",
+    "qa",
+    "acceptance-criteria"
+  ],
+  "homepage": "https://github.com/segmently-ai/segmently-modules",
+  "repository": "https://github.com/segmently-ai/segmently-modules",
+  "license": "MIT",
+  "dependencies": [
+    "segmently-modules"
+  ]
+}

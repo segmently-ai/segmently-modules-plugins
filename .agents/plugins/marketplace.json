@@ -1,0 +1,26 @@
+{
+  "name": "segmently-modules",
+  "plugins": [
+    {
+      "name": "segmently-modules",
+      "source": {
+        "source": "local",
+        "path": "./plugins/segmently-modules"
+      }
+    },
+    {
+      "name": "segmently-modules-qa",
+      "source": {
+        "source": "local",
+        "path": "./plugins/segmently-modules-qa"
+      }
+    },
+    {
+      "name": "segmently-modules-ui",
+      "source": {
+        "source": "local",
+        "path": "./plugins/segmently-modules-ui"
+      }
+    }
+  ]
+}
