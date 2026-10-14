@@ -16,7 +16,7 @@ An AI coding agent is an excellent worker with amnesia and a memory of limited s
 3. it brings the notes up to date when the work is done;
 4. it keeps the notes per role, so the agent reads only the notes it needs right now: its memory is limited.
 
-The plugins: `segmently-modules` (the core skills and the `segmently-modules` command line), `segmently-modules-ui` (the designer skill) and `segmently-modules-qa` (the acceptance-criteria skills). This branch: `dev`, segmently-modules 0.2.1-dev.h34b91151. The engine, its docs and its issues: https://github.com/segmently-ai/segmently-modules.
+The plugins: `segmently-modules` (the core skills and the `segmently-modules` command line), `segmently-modules-ui` (the designer skill) and `segmently-modules-qa` (the acceptance-criteria skills). This branch: `dev`, segmently-modules 0.3.0-dev.h774bd04f. The engine, its docs and its issues: https://github.com/segmently-ai/segmently-modules.
 
 ### Install with one prompt
 
@@ -44,7 +44,7 @@ Setup is done. Two steps for you:
 - it has a module registry another tool or team already wrote: adopt it with the module-adopt skill;
 - it has code but no module registry: run segmently-modules setup, then map the code into modules and write their notes with the module-init skill;
 - it is a new repository: run segmently-modules setup, then the module-create skill for the first module.
-segmently-modules setup also adds the Segmently Modules section to CLAUDE.md and AGENTS.md, so every session knows the skills and the module system."
+The setup also adds the Segmently Modules section to CLAUDE.md and AGENTS.md, so every session knows the skills and the module system."
 ```
 
 **Codex**
@@ -70,7 +70,7 @@ Setup is done. Two steps for you:
 - it has a module registry another tool or team already wrote: adopt it with the module-adopt skill;
 - it has code but no module registry: run segmently-modules setup, then map the code into modules and write their notes with the module-init skill;
 - it is a new repository: run segmently-modules setup, then the module-create skill for the first module.
-segmently-modules setup also adds the Segmently Modules section to CLAUDE.md and AGENTS.md, so every session knows the skills and the module system."
+The setup also adds the Segmently Modules section to CLAUDE.md and AGENTS.md, so every session knows the skills and the module system."
 ```
 
 Nothing goes into `CLAUDE.md` by hand: `segmently-modules setup` (the first request above runs it) adds a short "Module docs (Segmently Modules)" section to `CLAUDE.md` (Claude Code) and `AGENTS.md` (Codex, Cursor, Copilot; Gemini CLI reads `GEMINI.md`). It tells every session to read a task's notes before the work (`segmently-modules context`), to bring them up to date after it (`segmently-modules sync-instructions`, the `module-sync` skill), to start module work with `segmently-modules next`, and it lists the skills. `segmently-modules agents-md` refreshes the section; the text around it stays yours.

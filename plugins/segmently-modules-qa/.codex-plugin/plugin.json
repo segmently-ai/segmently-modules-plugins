@@ -1,6 +1,6 @@
 {
   "name": "segmently-modules-qa",
-  "version": "0.2.1-dev.h34b91151",
+  "version": "0.3.0-dev.h774bd04f",
   "description": "The Segmently Modules acceptance-criteria skills: a task's criteria before the code, and a module's acceptance baseline",
   "author": {
     "name": "Segmently Modules maintainers"

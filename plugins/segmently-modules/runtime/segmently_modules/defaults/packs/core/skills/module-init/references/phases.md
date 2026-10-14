@@ -26,11 +26,11 @@ Give each writer its work item path and these rules (the item's `prompt` says th
 - Write exactly `MODULE.md`, one `roles/<role>.md` per role of the item, and `entry.json` into
   the item's `staging_dir` — no other file, nothing outside it.
 - `entry.json`: `description` (one sentence within the length limits of the prompt),
-  `keywords` (at least the prompt's minimum, the words a developer would type in a task about
-  this module, including the things and actions its `## Purpose` paragraph names even where
-  the code names them differently — routing matches whole words without stemming, so single
-  words with the plural and verb forms of the key nouns, and each key verb in every form tasks
-  use: base, `-s`, `-ed`, `-ing`), optional `related_modules` edges to the neighbours.
+  `keywords` (between the prompt's minimum and maximum, the words a developer would type in a
+  task about this module and no other, including the things and actions its `## Purpose`
+  paragraph names even where the code names them differently — routing ignores word endings,
+  so one form per word; no generic word, no thing another module owns, no word for the
+  developer's own tools), optional `related_modules` edges to the neighbours.
 - Name only what exists: every path in backticks exists, written from the repository root
   (never from a package, never an import specifier or a sibling doc's bare name); in the
   components table (`| Name | Path | Purpose |`) a `Name` in backticks is a symbol defined in

@@ -25,6 +25,7 @@ Every code the `lint` and `ci` verbs report. **Safe** = a mechanical fix the ski
 | MS020 | more keywords than the soft budget (info) | Ask: keep, trim or split |
 | MS021 | a keyword shared by many modules (info, `*`) | Ask which module the word really routes to |
 | MS022 | an empty keyword, which matches every task | Safe: remove it |
+| MS023 | a keyword is a generic word (`create`, `user`, `screen`, … in any form; info) | Ask: drop it, or keep it when the module really owns the word |
 | MS030 | the module doc is past the split signal | Ask: trim first — move dated history, API dumps and checklists into a supplementary doc and register it (`segmently-modules registry append <module> context_files.supplementary '"<path>"' --json`); `module-split` when it is still too long |
 | MS031 | the module doc is past the hard stop | Ask: the trim of MS030, then `module-split` |
 | MS032 | a role doc is past its budget | Ask: trim (history and reference sections into a supplementary doc), or split the module |

@@ -448,7 +448,7 @@ def _stale_paths(ws, doc: str, target: str, text: str, heading: str, repo_root) 
         if in_table and line.startswith("|"):
             continue
         for token in _BACKTICK.findall(line):
-            candidate = component_path(token)
+            candidate = component_path(token, ws.exists)
             if not candidate or candidate.startswith(("/", "./", "../")) or candidate in out \
                     or _PLACEHOLDER.search(candidate):
                 continue

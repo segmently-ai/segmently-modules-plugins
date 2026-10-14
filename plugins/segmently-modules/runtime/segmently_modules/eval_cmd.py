@@ -25,9 +25,11 @@ from pathlib import Path
 from segmently_modules.changes import repo_files, require_work_tree, routes, target_names
 from segmently_modules.create import resolve_template
 from segmently_modules.init_work import fill
-from segmently_modules.match import match_modules
+from segmently_modules.match import TaskText, match_modules
 from segmently_modules.output import EXIT_FINDINGS, EXIT_OK, UsageError, emit
+from segmently_modules.preflight import BIG, SNIFF
 from segmently_modules.registry import as_dict
+from segmently_modules.words import FileWords, normalizing
 from segmently_modules.workspace import Workspace
 
 ACTIONS = ("routing",)
@@ -100,14 +102,22 @@ def hit(expected: str, got: list[str]) -> bool:
 def routing(ws, tasks: list[dict], top: int, threshold: float,
             targets: set[str] | None = None) -> dict:
     """The routing report of `tasks` over the workspace's registry (`targets`: its routing
-    targets, when the caller has them)."""
+    targets, when the caller has them): the hit rate within `top` (the gate), and how precise
+    the routing is — the hit rate at the first place, the modules a task matched on average
+    (every row at `min_score` or more, uncapped), and per target the keywords no task matched
+    and no file of the target holds (`unused_keywords`, `words.FileWords`)."""
     cfg = ws.config["match"]
-    per = {t: {"module": t, "tasks": 0, "hits": 0, "misses": []}
+    normalize = normalizing(cfg)
+    per = {t: {"module": t, "tasks": 0, "hits": 0, "top1_hits": 0, "misses": [],
+               "unused_keywords": []}
            for t in sorted(targets if targets is not None else target_names(ws.registry.modules))}
-    hits = 0
+    hits = top1 = matched = 0
+    texts = []
     for t in tasks:
-        got = [r["module"] for r in match_modules(ws.registry.modules, t["task"], cfg, top,
-                                                  cfg["min_score"])]
+        rows = match_modules(ws.registry.modules, t["task"], cfg, 10 ** 9, cfg["min_score"])
+        got = [r["module"] for r in rows[:top]]
+        matched += len(rows)
+        texts.append(TaskText(t["task"], normalize))
         row = per[t["module"]]
         row["tasks"] += 1
         if hit(t["module"], got):
@@ -115,10 +125,56 @@ def routing(ws, tasks: list[dict], top: int, threshold: float,
             hits += 1
         else:
             row["misses"].append({"task": t["task"], "got": got})
+        if hit(t["module"], got[:1]):
+            row["top1_hits"] += 1
+            top1 += 1
+    files = target_files(ws, set(per))
+    words = FileWords(lambda rel: file_text(ws.root / rel), normalize)
+    for target, row in per.items():
+        row["unused_keywords"] = [
+            kw for kw in own_keywords(ws.registry.modules, target)
+            if not any(task.unit(kw) is not None for task in texts)
+            and not any(words.holds(f, [kw.lower()]) for f in files.get(target, ()))]
     n = len(tasks)
-    return {"hit_rate": (hits * 1000 // n) / 1000, "top": top, "tasks": n,
+    return {"hit_rate": (hits * 1000 // n) / 1000, "top1_hit_rate": (top1 * 1000 // n) / 1000,
+            "mean_matched": (matched * 100 // n) / 100, "top": top, "tasks": n,
             "per_module": list(per.values()), "hits": hits, "min_hit_rate": threshold,
             "passed": hits >= Fraction(str(threshold)) * n}
+
+
+def own_keywords(modules: dict, target: str) -> list[str]:
+    """A routing target's own keyword list (a child's, not its parent's)."""
+    parent, _, child = target.partition("/")
+    entry = as_dict(modules.get(parent))
+    holder = as_dict(as_dict(entry.get("submodules")).get(child)) if child else entry
+    kws = holder.get("keywords")
+    return list(dict.fromkeys(k for k in kws if isinstance(k, str) and k.strip())) \
+        if isinstance(kws, list) else []
+
+
+def target_files(ws, targets: set[str]) -> dict[str, list[str]]:
+    """The code files each target routes to (its docs left out); none outside a git work
+    tree."""
+    out: dict[str, list[str]] = {}
+    try:
+        found = list(routes(ws, repo_files(ws.root)))
+    except UsageError:
+        return out
+    for path, target, via in found:
+        if via != "docs" and target in targets and path not in out.setdefault(target, []):
+            out[target].append(path)
+    return out
+
+
+def file_text(path: Path) -> str | None:
+    """A file's text, or None: not a regular file, larger than `BIG`, binary, unreadable."""
+    try:
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > BIG:
+            return None
+        data = path.read_bytes()
+    except OSError:
+        return None
+    return None if b"\0" in data[:SNIFF] else data.decode("utf-8", errors="replace")
 
 
 def purpose(ws, doc: str | None) -> str | None:
@@ -220,9 +276,12 @@ def run(args) -> int:
 
 
 def render(d) -> None:
-    print(f"hit rate {d['hit_rate']} ({d['hits']}/{d['tasks']}, top {d['top']})")
+    print(f"hit rate {d['hit_rate']} ({d['hits']}/{d['tasks']}, top {d['top']}); first place "
+          f"{d['top1_hit_rate']}; {d['mean_matched']} module(s) matched per task")
     for row in d["per_module"]:
-        print(f"{row['module']}  {row['hits']}/{row['tasks']}")
+        print(f"{row['module']}  {row['hits']}/{row['tasks']} (first {row['top1_hits']})")
         for miss in row["misses"]:
             print(f"  miss  \"{miss['task']}\" → {', '.join(miss['got']) or '(no module)'}")
+        if row["unused_keywords"]:
+            print(f"  unused  {', '.join(row['unused_keywords'])}")
     print(f"threshold {d['min_hit_rate']}: {'passed' if d['passed'] else 'FAILED'}")

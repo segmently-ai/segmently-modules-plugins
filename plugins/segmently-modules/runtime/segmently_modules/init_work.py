@@ -35,6 +35,7 @@ from segmently_modules.fields import value_matches
 from segmently_modules.init_flow import RESTART, strings
 from segmently_modules.output import UsageError
 from segmently_modules.store import serialize
+from segmently_modules.words import distinct_words, generic_keywords, generic_words, normalizing
 from segmently_modules.workspace import Workspace
 
 FILES_CAP = 200
@@ -207,11 +208,30 @@ class Work:
                   "description_min": cfg["create"]["description_min"],
                   "description_max": cfg["create"]["description_max"],
                   "min_keywords": cfg["create"]["min_keywords"],
+                  "max_keywords": cfg["create"]["max_keywords"],
+                  "generic_words": ", ".join(f"`{w}`" for w in generic_words(cfg)),
+                  "others": self.others(name),
                   "relations": ", ".join(cfg["registry"]["relations"]), "ask_fields": asked,
                   "modules_dir": cfg["paths"]["modules_dir"],  # the layout init done checks
                   "module_doc": cfg["paths"]["module_doc"]}
         text = fill(resolve_template(self.ws, "init/module_prompt.md"), values)
         return text if text.endswith("\n") else text + "\n"
+
+    def others(self, name: str) -> str:
+        """One line per other module of the repository for the writer's prompt: a confirmed
+        candidate with its paths (the first three), a module already in the registry with its
+        description."""
+        lines = []
+        for c in self.confirmed():
+            if c["name"] != name:
+                paths = [f"`{p}`" for p in c["paths"][:3]] + (["…"] if len(c["paths"]) > 3
+                                                                else [])
+                lines.append(f"- `{c['name']}` — {', '.join(paths)}")
+        names = {c["name"] for c in self.confirmed()}
+        for other, entry in sorted(self.registry_modules().items()):
+            if other != name and other not in names and isinstance(entry, dict):
+                lines.append(f"- `{other}` — {str(entry.get('description') or '').strip()}")
+        return "\n".join(lines) or "- none"
 
     def fanout(self) -> dict:
         """Write one work item per included confirmed module and every module's state entry.
@@ -498,10 +518,13 @@ class Work:
         if not isinstance(desc, str) or not low <= len(desc.strip()) <= high:
             out.append(f"description must be {low}–{high} characters")
         kws = entry.get("keywords")
-        need = cfg["create"]["min_keywords"]
+        need, most = cfg["create"]["min_keywords"], cfg["create"]["max_keywords"]
         if not (isinstance(kws, list) and all(isinstance(k, str) and k.strip() for k in kws)
                 and len(set(kws)) >= need):
             out.append(f"at least {need} distinct keywords (a list of non-empty strings)")
+        elif (count := distinct_words(kws, normalizing(cfg["match"]))) > most:
+            out.append(f"at most {most} keywords, forms of one word counted once (got {count}): "
+                       f"keep the words that point to this module and no other")
         for name, fdef in extra.items():
             if name not in entry:
                 out.append(f"entry.json: missing '{name}' (a field this repository asks for)")
@@ -527,6 +550,20 @@ class Work:
             if unknown:
                 out.append(f"related_modules[{i}]: unknown key '{unknown[0]}'")
         return out
+
+    def entry_warnings(self, module: str) -> list[str]:
+        """What `init done` says about a written entry.json without refusing it: every generic
+        keyword (`words.generic_words`, any form under `[match] normalize`, never a word of the
+        module's own name) — `init verify` fails a new module that still holds one."""
+        try:
+            entry = json.loads((self.staging_dir(module) / "entry.json").read_bytes()
+                               .decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            return []
+        kws = entry.get("keywords") if isinstance(entry, dict) else None
+        return [f"keyword '{k}' is a generic word: it matches many tasks — leave it out, or "
+                f"use a word only this module would answer" for k in generic_keywords(
+                    self.ws.config, module, kws if isinstance(kws, list) else [])]
 
     def done(self, module: str) -> tuple[str, list[str]]:
         """`init done <module>`: (status, problems) — `done` when the staging output is

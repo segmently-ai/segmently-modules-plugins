@@ -46,8 +46,9 @@ If `segmently-modules` is not found, tell the user how to install it — the `se
    ```
 
    It writes `<config_dir>/init/proposal.json`. Present the candidates in a short table —
-   name, paths, confidence, the rationale in a few words — then the `hints` (`merge`, `split`)
-   and the `unassigned` code files. The seed keywords are already filtered (no npm scope, no
+   name, paths, confidence, the rationale in a few words — then the `hints` (`merge`, `split`;
+   a `split` with `children`: offer them, grouped by feature) and the `unassigned` code files.
+   The seed keywords are already filtered (no npm scope, no
    token of 3 characters or fewer).
 
 3. **STOP — gate 3.** Ask the user which candidates to keep, merge, split, rename or exclude.
@@ -100,7 +101,8 @@ If `segmently-modules` is not found, tell the user how to install it — the `se
 
    It adds the import edges, gives a keyword several new modules share to the one with the most
    files and removes it only from the modules whose code never mentions it (no negative
-   keyword), and lists the `judgement` items it will not decide. Ask the user about each
+   keyword), drops a keyword no holder's code mentions (`dropped`: show them in one line), and
+   lists the `judgement` items it will not decide. Ask the user about each
    keyword tie (whether one module owns the word) and each keyword that could not be removed
    without dropping a module below the keyword minimum;
    report the duplicate names with their file:line (the user decides later whether code
@@ -125,9 +127,10 @@ If `segmently-modules` is not found, tell the user how to install it — the `se
 
 8. **Fix what verify found.** Lint findings: fix the staging docs or the staging registry.
    Invented components (a path that does not exist, a symbol not in its file): remove or
-   correct them in the staging docs. Routing misses below the threshold: change keywords, never
-   the tasks — at most 2 rounds; after that, report the remaining misses. Each round, in this
-   order:
+   correct them in the staging docs. `keywords` rows (too many words, a generic word): trim
+   them in the staging registry, `unused_keywords` first. Routing misses below the threshold:
+   change keywords, never the tasks — at most 2 rounds; after that, report the remaining
+   misses. Each round, in this order:
    - First, a missed module that was already in the registry (`done (existing)`): it is never
      changed in the staging registry — the finish step refuses that. Ask the user, change it in
      the registry itself, then run `segmently-modules init reconcile --force --json`. It rebuilds the
@@ -137,7 +140,8 @@ If `segmently-modules` is not found, tell the user how to install it — the `se
    - Then verify again.
 
 9. **STOP — gate 7.** Show the verify summary: lint counts, invented components, the hit rate
-   and its misses, the judgement items still open. End that message with one direct yes/no
+   and its misses, the first-place rate, the judgement items still open. End that message
+   with one direct yes/no
    question — "Shall I run segmently-modules init finish now?" — and wait for the answer: naming the next
    command is not asking. Only on a yes:
 

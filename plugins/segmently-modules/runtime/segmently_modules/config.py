@@ -43,19 +43,20 @@ LAYER_SCHEMA = {
                                       "role_doc_max", "keywords_soft", "keyword_shared_warn")},
                 "skill_split_signal": "int>=1", "pack_split_signal": "int>=1"},
     "match": {**{k: "int" for k in ("keyword_weight", "combination_weight", "negative_weight",
-                                    "min_score", "top")}, "mode": "str"},
+                                    "min_score", "top")}, "mode": "str", "normalize": "str"},
     "lint": {"fail_on": "str", "component_table_heading": "str", "drift_severity": "str",
              "overlap_severity": "str", "link_severity": "str"},
-    "create": {"min_keywords": "int", "description_min": "int", "description_max": "int",
-               "default_status": "str"},
+    "create": {"min_keywords": "int", "max_keywords": "int", "description_min": "int",
+               "description_max": "int", "default_status": "str", "generic_keywords": "list[str]"},
     "coverage": {"include": "list[str]", "exclude": "list[str]", "doc_only": "list[str]"},
     "ci": {"fail_on": "str", "base": "str", "coverage_fail_under": "number"},
     "packs": {"agents": "list[str]", "builtin": "list[str]", "builtin_delivery": "str|table"},
     "init": {"exclude": "list[str]", "co_change_commits": "int", "max_parallel": "int",
-             "routing_min_hit_rate": "number"},
+             "routing_min_hit_rate": "number", "split_hint_lines": "int"},
 }
 CI_FAIL_ON = ("error", "never", "warning")
 MATCH_MODES = ("lexical", "semantic", "hybrid")  # [match] mode / --match (P8.1 S1)
+NORMALIZE = ("suffix", "none")  # [match] normalize: word endings ignored, or exact words
 _MODEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,99}")
 EFFORTS = ("quick", "standard", "deep")  # [search] effort (P8.1 S9)
 CARD_KEYWORDS_DEFAULT = 10  # [search] card_keywords (P8.2 D2)
@@ -176,6 +177,18 @@ def validate_layer(layer: dict, source) -> None:
     if mode is not None and mode not in MATCH_MODES:
         raise UsageError(f"{source}: [match] mode: expected one of {', '.join(MATCH_MODES)}, "
                          f"got {mode!r}")
+    most = layer.get("create", {}).get("max_keywords")
+    if most is not None and most < 1:
+        raise UsageError(f"{source}: [create] max_keywords: expected an integer >= 1, got "
+                         f"{most!r}")
+    normalize = layer.get("match", {}).get("normalize")
+    if normalize is not None and normalize not in NORMALIZE:
+        raise UsageError(f"{source}: [match] normalize: expected one of {', '.join(NORMALIZE)}, "
+                         f"got {normalize!r}")
+    split = layer.get("init", {}).get("split_hint_lines")
+    if split is not None and split < 0:
+        raise UsageError(f"{source}: [init] split_hint_lines: expected an integer >= 0, got "
+                         f"{split!r}")
     commits = layer.get("init", {}).get("co_change_commits")
     if commits is not None and commits < 0:
         raise UsageError(f"{source}: [init] co_change_commits: expected an integer >= 0, got "

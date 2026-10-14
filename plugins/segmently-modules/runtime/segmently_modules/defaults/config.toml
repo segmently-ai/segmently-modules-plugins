@@ -31,6 +31,7 @@ combination_weight = 2
 negative_weight = -5
 min_score = 3
 top = 8
+normalize = "suffix"          # word endings -s/-es/-ies/-ed/-ing ignored on both sides; "none": exact words
 
 [lint]
 fail_on = "error"
@@ -41,6 +42,8 @@ link_severity = "warning"      # MS041: a link in a registered doc whose target 
 
 [create]
 min_keywords = 5              # top-level modules; a child needs at least 1
+max_keywords = 40             # distinct words (forms of one word count once): init done refuses more, create warns
+# generic_keywords = []       # words added to the built-in generic list (create / init done warn, lint MS023)
 description_min = 20
 description_max = 200
 default_status = "planned"
@@ -61,6 +64,7 @@ exclude = []                  # globs the init file set leaves out (preflight, m
 co_change_commits = 500       # init map: how many recent commits the co-change signal reads; 0 = off
 max_parallel = 4              # init run / the module-init skill: work items written at a time
 routing_min_hit_rate = 0.8    # init verify / eval routing: the lowest routing hit rate that passes
+split_hint_lines = 10000      # init map: a candidate with more lines of code gets a split hint (0 = off)
 
 [roles.developer]
 order = 10

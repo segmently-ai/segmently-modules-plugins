@@ -439,11 +439,16 @@ def run_action(args, root: Path, config_dir: Path) -> int:
         return EXIT_OK
     if args.action == "done":
         status, problems = phase4.done(args.module)
+        warnings = [] if problems or status == "already done" else \
+            phase4.entry_warnings(args.module)
         data = {"action": "done", "module": args.module,
                 "status": "done" if status == "already done" else status, "problems": problems,
+                "warnings": warnings,
                 "message": "already done" if status == "already done" else None}
         for problem in problems:
             print(f"segmently-modules: {args.module}: {problem}", file=sys.stderr)
+        for warning in warnings:
+            print(f"segmently-modules: {args.module}: warning: {warning}", file=sys.stderr)
         emit("init", data, args.json, _render_done)
         return EXIT_FINDINGS if problems else EXIT_OK
     if args.action == "reconcile":
@@ -591,11 +596,20 @@ def _render_verify(d) -> None:
     else:
         r = d["routing"]
         print(f"routing       hit rate {r['hit_rate']} ({r['hits']}/{r['tasks']}, top "
-              f"{r['top']}; threshold {r['min_hit_rate']})")
+              f"{r['top']}; threshold {r['min_hit_rate']}); first place {r['top1_hit_rate']}; "
+              f"{r['mean_matched']} module(s) matched per task")
         for row in r["per_module"]:
             for miss in row["misses"]:
                 print(f"  miss  {row['module']}: \"{miss['task']}\" → "
                       f"{', '.join(miss['got']) or '(no module)'}")
+            if row["unused_keywords"]:
+                print(f"  unused  {row['module']}: {', '.join(row['unused_keywords'])}")
+    print(f"keywords      {len(d['keywords'])} module(s) with too many words or a generic word")
+    for k in d["keywords"]:
+        over = (f"{k['words']} words > max_keywords {k['max_keywords']}"
+                if k["words"] > k["max_keywords"] else "")
+        generic = f"generic: {', '.join(k['generic'])}" if k["generic"] else ""
+        print(f"  {k['module']}: {'; '.join(x for x in (over, generic) if x)}")
     print(f"{'passed' if d['passed'] else 'FAILED':<13} {d['verify']}")
     print(f"next: {d['next']}")
 
@@ -606,6 +620,8 @@ def _render_reconcile(d) -> None:
     added = sum(e["source"] == "imports" for e in d["edges"])
     print(f"edges         {len(d['edges'])} ({added} added from the imports)")
     for c in d["collisions"]:
+        if not c["owner"] and not any(c["files"].values()):
+            continue  # no holder's code holds it: the `dropped` line (or a floor item)
         owner = c["owner"] or "a tie"
         removed = f"; removed from {', '.join(c['removed'])}" if c["removed"] else ""
         # a tie has no owner: nothing is kept and nothing removed
@@ -613,6 +629,12 @@ def _render_reconcile(d) -> None:
         if kept:  # D14: the holders whose own files hold the keyword keep it
             removed += f"; kept by {', '.join(kept)} (their files hold it)"
         print(f"collision     '{c['keyword']}' — owner {owner}{removed}")
+    if d["dropped"]:
+        words = [x["keyword"] for x in d["dropped"]]
+        shown = ", ".join(words[:12]) + (f" and {len(words) - 12} more" if len(words) > 12 else "")
+        print(f"dropped       {len(words)} word(s) no holder's code holds, from every module "
+              f"that held them: {shown} — put one back in {d['staging_registry']} when a "
+              f"module owns it")
     for d_ in d["duplicates"]:
         where = ", ".join(f"{x['file']}:{x['line']}" for x in d_["definitions"])
         print(f"duplicate     {d_['name']} — {where}")
