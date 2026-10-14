@@ -5,6 +5,8 @@ module resolves the mode (the `--match` flag wins over `[match] mode`, which win
 (`segmently_modules.agent`) with the work order of `segmently-modules choose`, and fuses the rankings (reciprocal rank
 fusion, k = 60). A lexical run never reaches the agent and changes no byte. The engine holds no
 model and no network code: the agent is a command the user configured."""
+from __future__ import annotations
+
 import os
 
 from segmently_modules import agent

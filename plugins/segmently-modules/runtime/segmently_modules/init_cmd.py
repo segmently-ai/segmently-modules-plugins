@@ -12,6 +12,8 @@ work item per confirmed module), `next` (claim one), `done MODULE` (check its st
 registry), `eval-tasks --executor CMD` (the routing tasks), `verify` (lint, invented components,
 routing), `finish [--open-pr]` (gate 7: the docs and the registry written) — one envelope
 `segmently-modules.init/1` each."""
+from __future__ import annotations
+
 import functools
 import subprocess
 import sys

@@ -13,6 +13,8 @@ runs; the first step that needs an agent or a person stops the run, named in `ne
                         tasks)
   --open-pr             gate 7 as a pull request: `init finish --open-pr` (or, after a failed
                         push or `gh`, the steps that are left)"""
+from __future__ import annotations
+
 import json
 
 from segmently_modules.output import EXIT_FINDINGS, EXIT_OK, UsageError

@@ -21,6 +21,8 @@ of an output `init run` refused stay in the module's entry (`problems`) until it
 which hands them to the writer (`with_problems`: `previous_problems` and `NOTE` after the
 prompt; the work item file never changes). Every state change is a read-modify-write under
 `state.json.lock`."""
+from __future__ import annotations
+
 import json
 import re
 import shutil
@@ -57,6 +59,14 @@ def fence(text: str) -> str:
     """A code fence longer than every backtick run of `text`."""
     runs = [len(m) for m in re.findall(r"`{3,}", text)]
     return "`" * max(3, max(runs, default=0) + 1)
+
+
+def placeholder_names(text: str) -> set[str]:
+    """The names `string.Template(text)` substitutes, `$name` and `${name}` alike — what
+    `Template.get_identifiers` (Python 3.11) gives, on every Python."""
+    template = string.Template(text)
+    return {m.group("named") or m.group("braced") for m in template.pattern.finditer(text)
+            if m.group("named") or m.group("braced")}
 
 
 def fill(template: str, values: dict) -> str:
@@ -374,7 +384,7 @@ class Work:
             except OSError as e:
                 raise CheckError(f"cannot read {self.flow.rel(path)}: {e.strerror or e}") \
                     from None
-            names |= set(string.Template(text).get_identifiers())
+            names |= placeholder_names(text)
         return names
 
     def planned(self) -> dict:

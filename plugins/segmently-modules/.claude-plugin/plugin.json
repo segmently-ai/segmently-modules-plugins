@@ -1,6 +1,6 @@
 {
   "name": "segmently-modules",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Module-registry skills for coding agents — find, read, update, create, split and lint module docs, start them from existing code or adopt a registry — with the segmently-modules CLI they run",
   "author": {
     "name": "Segmently Modules maintainers"

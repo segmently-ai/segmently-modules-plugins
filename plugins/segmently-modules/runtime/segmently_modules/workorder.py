@@ -4,6 +4,8 @@ rules, one card per module and child, the answer's JSON Schema and a digest of t
 deterministic (no time, path, host or random value), so two runs on one tree are byte-identical.
 `validate_answer` is the one validator behind `choose --apply`, `choose --run` and
 `--match semantic|hybrid`."""
+from __future__ import annotations
+
 import hashlib
 import json
 import string

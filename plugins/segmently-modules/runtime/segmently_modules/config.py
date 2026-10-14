@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import copy
 import re
-import tomllib
 from importlib import resources
 from pathlib import Path
 
 from segmently_modules import __version__
+from segmently_modules._toml import tomllib
 from segmently_modules.merge import merge_layers
 from segmently_modules.output import UsageError
 

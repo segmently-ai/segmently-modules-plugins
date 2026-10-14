@@ -1,6 +1,8 @@
 """Pipeline verbs. `context` answers "what should this role read before planning this task";
 `discover` answers "which modules will this change touch, and which docs follow along".
 Both are deterministic (keywords, code pointers, code_map, paths) — agents add judgment."""
+from __future__ import annotations
+
 import errno
 import functools
 import os

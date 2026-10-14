@@ -4,6 +4,8 @@ template `agents-md.md` (resolved like every template, so a team or a pack can o
 the line `<!-- segmently-modules:end -->`. Only the lines from the begin marker through the end marker are
 ever rewritten; every other byte of the file is kept, the block takes the file's newline style,
 and the file is replaced atomically — through a symlink, keeping its mode."""
+from __future__ import annotations
+
 import os
 import re
 import string

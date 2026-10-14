@@ -9,6 +9,8 @@ Per module: `docs_to_update` (what `discover` lists for the change; with `--modu
 `show --all-roles` lists that exists, `*.legacy.md` excluded), `drift` (the `lint --changed`
 checks of the change for that module), `fields` (every field of the module's scope with a
 `sync_hint`, from all layers) and `proposals_pending` (queued proposal items for the module)."""
+from __future__ import annotations
+
 from dataclasses import asdict
 
 from segmently_modules.changes import changed_files, diff_names, missing_files

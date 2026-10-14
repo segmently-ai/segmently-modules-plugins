@@ -22,6 +22,8 @@ One step applies them under the registry lock:
   or rejected concurrently) is simply skipped. Processed files move to `<proposals_dir>/done/`
   with per-item results.
 """
+from __future__ import annotations
+
 import copy
 import json
 import os

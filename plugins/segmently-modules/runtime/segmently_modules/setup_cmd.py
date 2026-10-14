@@ -24,6 +24,8 @@ dir's packs, overrides and config.user.toml. A step that refuses (exit 2) stops 
 naming the step and what ran before it; a packs sync conflict (exit 1) lets agents-md run, and
 setup exits 1. Root: `--root`, else the nearest directory with a segmently-modules marker or `.git` above
 the current directory (as every other verb finds it), else the current directory."""
+from __future__ import annotations
+
 import contextlib
 import functools
 import os

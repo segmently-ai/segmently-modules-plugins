@@ -1,6 +1,8 @@
 """Value rules that lint reports as ERRORs and the registry writers refuse — one definition for
 both, so a validated write never produces a lint error on the value it wrote. Each rule returns
 (lint code, message)."""
+from __future__ import annotations
+
 from segmently_modules.registry import as_dict
 
 

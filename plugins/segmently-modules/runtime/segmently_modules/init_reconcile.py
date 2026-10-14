@@ -27,6 +27,8 @@ never loses a keyword. The script runs no agent and no command but git (the file
 `judgement` holds what a person or the `module-init` skill decides. A staging registry edited
 since the last reconcile is kept: `--force` rebuilds it from the `entry.json` files. Refused
 once `init finish` is done."""
+from __future__ import annotations
+
 import json
 import re
 from pathlib import PurePosixPath

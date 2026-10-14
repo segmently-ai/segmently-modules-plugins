@@ -6,6 +6,8 @@ for a usage error (an unknown or option-like --base, a threshold outside 0–100
 
 `--baseline FILE|-` (the `--json` output of an earlier run) tells a finding of lint or drift that
 predates the change (`known`) from a new one; a step then fails only on the new ones."""
+from __future__ import annotations
+
 import json
 import re
 from dataclasses import asdict

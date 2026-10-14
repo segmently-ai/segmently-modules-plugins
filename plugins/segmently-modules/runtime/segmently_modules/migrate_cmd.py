@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 
 from segmently_modules.migrations import all_migrations

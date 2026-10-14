@@ -12,6 +12,8 @@ skills.
         `[packs] agents`, else the agents whose directories already hold managed skills (an
         earlier sync; under `builtin_delivery = "plugin"` also codex when `.codex/agents/` holds
         a marked agent file); `--remove` (with `--agent`) deletes the copies instead"""
+from __future__ import annotations
+
 import functools
 import os
 import re

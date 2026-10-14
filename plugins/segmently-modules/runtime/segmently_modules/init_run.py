@@ -18,6 +18,8 @@ to it, and so is one it put back or claimed again while its executor ran (nothin
 same attempt only). A git work tree is compared before and after (`git status`, file hashes; a
 symlink by its target text, never followed; a rename's or copy's source path too): a change
 outside `<config_dir>/init/` fails the run (exit 1) naming each path."""
+from __future__ import annotations
+
 import bisect
 import contextlib
 import hashlib

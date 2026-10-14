@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import contextlib
 import json
 import os
@@ -67,33 +69,49 @@ class _QuietStream:
         return getattr(self._raw, name)
 
 
-def _null_stderr():
-    """A text stream on file descriptor 2 when fd 2 is not open at start, else None. With fd 2
-    closed Python sets `sys.stderr = None`, `print(..., file=None)` writes to stdout, and the next
-    file the process opens would take fd 2 (a lock, a temp file, the agent's order file). So the
-    null device is put on fd 2 itself: no file the run opens becomes fd 2, and a child that
-    inherits stderr writes to the null device (fd 2 is made inheritable: `os.open` returns 2
-    itself when fd 0 and 1 are open, and that descriptor is close-on-exec). An open fd 2 is never
-    touched."""
+_held_fd2 = False  # reserve_stderr put the null device on fd 2
+
+
+def reserve_stderr() -> None:
+    """Put the null device on file descriptor 2 when fd 2 was closed at start (`sys.__stderr__`
+    is None) and is still free. With fd 2 closed Python sets `sys.stderr = None`,
+    `print(..., file=None)` writes to stdout, and the next file the process opens takes fd 2 — on
+    Python 3.9 already the import of `random` (by `tempfile`, `secrets`), which keeps
+    /dev/urandom open there for the whole run. So the command line calls this before it imports
+    the verbs: no file the run opens becomes fd 2, and a child that inherits stderr writes to the
+    null device (fd 2 is made inheritable: `os.open` returns 2 itself when fd 0 and 1 are open,
+    and that descriptor is close-on-exec). An open fd 2 is never touched."""
+    global _held_fd2
+    if _held_fd2 or sys.__stderr__ is not None:
+        return
     try:
         os.fstat(2)
-        return None
+        return
     except OSError:
         pass
     try:
         null = os.open(os.devnull, os.O_WRONLY)
     except OSError:
-        return None
+        return
     try:
         if null != 2:  # fd 0 or 1 may be closed too: they are given back as they were
             os.dup2(null, 2)
     except OSError:
-        return None
+        return
     finally:
         if null != 2:
             os.close(null)
     with contextlib.suppress(OSError):  # in both cases: a child inherits the null device
         os.set_inheritable(2, True)
+    _held_fd2 = True
+
+
+def _null_stderr():
+    """A text stream on file descriptor 2 when fd 2 was closed at start and now holds the null
+    device (`reserve_stderr`), else None."""
+    reserve_stderr()
+    if not _held_fd2:
+        return None
     return os.fdopen(2, "w", encoding="utf-8", errors="backslashreplace",
                      closefd=False, buffering=1)
 

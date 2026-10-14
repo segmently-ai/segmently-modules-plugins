@@ -27,6 +27,8 @@ The kinds, in rank order (D4):
                 --module M` per drifted module, in registry order)
 A kind that cannot run is named in `skipped` (JSON only) with the reason. No config and no
 registry: one item, `segmently-modules setup` (SI-P61-8). Exit 0 with or without items."""
+from __future__ import annotations
+
 import contextlib
 import os
 import re

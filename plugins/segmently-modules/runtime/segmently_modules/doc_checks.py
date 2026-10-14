@@ -5,6 +5,8 @@ finding per module · MS041 a relative link in a registered doc whose target is 
 (`[lint] link_severity`) · MS042 (info) a `#anchor` that names no heading of its target doc ·
 MS043 (info) backticked repository paths outside the components table that are missing on disk,
 one finding per module."""
+from __future__ import annotations
+
 import html
 import os
 import posixpath

@@ -1,6 +1,8 @@
 """Registry persistence. Every writer goes through here: canonical serialization, an
 advisory lock next to the file, atomic replace, and optimistic concurrency (a write is
 refused when the file changed since it was read)."""
+from __future__ import annotations
+
 import contextlib
 import copy
 import errno

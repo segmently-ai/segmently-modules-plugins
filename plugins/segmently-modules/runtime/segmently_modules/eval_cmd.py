@@ -15,6 +15,8 @@
 
 While `init` is between reconcile and finish, both read the registry as `init finish` will leave
 it (`segmently_modules.init_overlay`)."""
+from __future__ import annotations
+
 import json
 import re
 from fractions import Fraction

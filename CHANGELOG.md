@@ -1,6 +1,12 @@
 <!-- segmently-modules:changelog:begin -->
 ## segmently-modules
 
+- 0.2.1 (stable): engine 650996a
+  ### Added
+  - npm: `tools/build_npm.py` builds the package `@segmently/modules` — the command line on macOS and Linux with `npm install -g @segmently/modules` or `npx @segmently/modules`. It carries the engine and the plugin's launcher and runs with the Python 3.9 or newer it finds; Node runs nothing. Publishing is a maintainer's step after a release ([docs/releasing.md](docs/releasing.md#npm)).
+  ### Changed
+  - Python 3.9 or newer (was 3.11): the `python3` of macOS's Command Line Tools (3.9, the package that brings git) runs the command line and the plugins, so a Mac needs no other Python. On Python 3.9 and 3.10 the TOML reader is tomli 2.3.2, vendored unchanged under `segmently_modules/_vendor/` (MIT) — the reader that became Python's own `tomllib` in 3.11, which 3.11 and newer keep using.
+  - The plugin launcher (`bin/segmently-modules`) also looks for `python3.10` and `python3.9`, and runs the engine through `python -c` instead of `python -P` (3.11+), to the same effect: the working directory never shadows the plugin's engine.
 - 0.2.0 (stable): engine eb89f2a
   ### Added
   - The repository is public under the MIT license: `LICENSE`, `CONTRIBUTING.md` (how to run the tests, the skill-text rules, pull requests) and `SECURITY.md` (private reports, the trust model). The README installs over https from the public repositories, pinned to the latest release; a stable release moves the pin.

@@ -9,6 +9,8 @@
                   whose `{module}` capture names no module takes nothing. Docs and
                   code_pointer mapping are unaffected.
 Glob syntax: `**` any path, `*` one segment, `?` one character."""
+from __future__ import annotations
+
 import json
 import os
 import re

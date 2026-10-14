@@ -8,6 +8,8 @@ it rewrites only the record (pack, version, file hashes), never the copy's files
 `--diff`'s `behind` compare with the new snapshot. Back to the pack: delete the directory and
 run `packs sync` again with the agents (`--agent …`, or `[packs] agents`); there is no
 un-eject."""
+from __future__ import annotations
+
 import difflib
 import functools
 import json

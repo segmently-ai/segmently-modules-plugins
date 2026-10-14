@@ -1,6 +1,6 @@
 {
   "name": "segmently-modules-ui",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The Segmently Modules designer skill: prototypes, audits and reviews UI work against the designer docs of the modules it touches",
   "author": {
     "name": "Segmently Modules maintainers"

@@ -14,6 +14,8 @@ skill_split_signal` · MS069 a pack's `SKILL.md` files together over `pack_split
 warnings, plain `lint` only: a size is a decomposition signal, never a cap) ·
 with --changed: MS050 code changed but no doc of its module · MS051 frozen legacy snapshot
 modified or deleted (report narrowed to the changed modules)."""
+from __future__ import annotations
+
 import json
 import os
 import re

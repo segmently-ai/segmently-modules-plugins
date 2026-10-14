@@ -15,14 +15,16 @@ bytes 0–8191 (`SNIFF`) — counts its `len(text.splitlines())` toward `lines` 
 `token_estimate` (`text bytes // 4`); a code file of a text kind also counts in its `languages`
 row (`LANGUAGES`, by extension). A manifest (package.json, pyproject.toml, setup.cfg, go.mod,
 Cargo.toml, composer.json, *.csproj) that does not parse has `name: null`, `workspaces: []`."""
+from __future__ import annotations
+
 import configparser
 import json
 import os
 import re
 import subprocess
-import tomllib
 from pathlib import Path, PurePosixPath
 
+from segmently_modules._toml import tomllib
 from segmently_modules.changes import DEPENDENCY_DIRS, git_env, glob_to_regex, work_tree_error
 
 SCHEMA = "segmently-modules.init-preflight/1"

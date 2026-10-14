@@ -40,6 +40,8 @@ not loadable keeps its agent file as it is (the skill's own row reports it); a f
 marker is never removed; nothing else under `.codex/` is read or written. A run that names its
 agents without codex never opens `.codex/`; a bare run under `builtin_delivery = "plugin"`
 reads `.codex/agents/` only to infer codex (`managed_agents`)."""
+from __future__ import annotations
+
 import contextlib
 import hashlib
 import json

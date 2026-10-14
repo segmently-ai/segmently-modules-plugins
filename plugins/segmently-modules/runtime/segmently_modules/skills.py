@@ -7,6 +7,8 @@ merged into the config: `path` (required: the skill directory, relative to the p
 Agent Skills name rule and must equal the `name` in the skill's `SKILL.md` front matter. When
 two packs declare one id, the higher-precedence pack's declaration wins everywhere (plain
 `lint` reports the other as MS065)."""
+from __future__ import annotations
+
 import hashlib
 import json
 import os

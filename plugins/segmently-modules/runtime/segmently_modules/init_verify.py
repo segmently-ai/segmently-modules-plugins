@@ -30,6 +30,8 @@ pins what was verified (every file's path and bytes, every symlink's path and ta
 eval-tasks` run was refused (the phase `running`; `--force` measures a tasks file written by
 hand anyway) and for a symlinked staging dir of a new module. After `init finish` both actions
 are refused."""
+from __future__ import annotations
+
 import hashlib
 import json
 import os
