@@ -20,12 +20,12 @@ The plugins: `segmently-modules` (the core skills and the `segmently-modules` co
 
 ### Install with one prompt
 
-Paste the block for your agent into a fresh session. It checks git and Python, installs the plugin and stops: an agent picks a newly installed plugin up only after a reload — `/reload-plugins` in Claude Code — or in a new session (Codex), and the prompt then hands you the first request.
+Paste the block for your agent into a fresh session. It checks git and Python, installs the plugin and ends with one message of two steps for you: type `/reload-plugins` (Claude Code; in Codex, restart it) — an agent cannot reload its own plugins — then paste the request it gives you, the start of the module setup.
 
 **Claude Code**
 
 ```text
-Set up Segmently Modules for Claude Code on this machine, then stop and tell me to restart.
+Set up Segmently Modules for Claude Code on this machine, then stop and give me the two next steps.
 
 Marketplace: segmently-ai/segmently-modules-plugins#stable. Plugin: segmently-modules@segmently-modules.
 
@@ -35,9 +35,11 @@ Run the steps in order and show me the exact output of every command:
    claude plugin install segmently-modules@segmently-modules --scope user
    If the marketplace is already there, run claude plugin marketplace update segmently-modules and then claude plugin update segmently-modules@segmently-modules --scope user.
 3. claude plugin list — the output must name segmently-modules. If it does not, say so plainly and do not continue.
-4. Do not use the skills yet: Claude Code picks a newly installed plugin up only after /reload-plugins or in a new session. Tell me the setup is done, then ask me to run /reload-plugins (or restart Claude Code) in the repository I want to work on, and to paste the request below there.
+4. Do not use the skills in this session yet. Claude Code picks a newly installed plugin up only after /reload-plugins, which only I can type, or in a new session. Do not try to reload or restart anything yourself and do not start another Claude Code process. End with one separate message to me that holds only the text below, word for word:
 
-The request to paste then:
+Setup is done. Two steps for you:
+1. Type /reload-plugins in this chat (or restart Claude Code in the repository you want to work on).
+2. Then paste this request:
 "Use the module-assistant skill to set Segmently Modules up in this repository:
 - it has a module registry another tool or team already wrote: adopt it with the module-adopt skill;
 - it has code but no module registry: run segmently-modules setup, then map the code into modules and write their notes with the module-init skill;
@@ -48,7 +50,7 @@ segmently-modules setup also adds the Segmently Modules section to CLAUDE.md and
 **Codex**
 
 ```text
-Set up Segmently Modules for Codex on this machine, then stop and tell me to restart.
+Set up Segmently Modules for Codex on this machine, then stop and give me the two next steps.
 
 Marketplace: segmently-ai/segmently-modules-plugins on ref stable. Plugin: segmently-modules@segmently-modules.
 
@@ -59,9 +61,11 @@ Run the steps in order and show me the exact output of every command:
    codex plugin add segmently-modules@segmently-modules
    If the marketplace is already there, run codex plugin marketplace upgrade segmently-modules and then codex plugin add segmently-modules@segmently-modules again.
 4. List the installed plugins and show me that segmently-modules is among them. If it is not, say so plainly and do not continue.
-5. Do not use the skills yet: Codex picks a newly installed plugin up only in a new session. Tell me the setup is done, then ask me to restart Codex in the repository I want to work on, and to paste the request below there.
+5. Do not use the skills in this session yet. Codex picks a newly installed plugin up only in a new session. Do not try to reload or restart anything yourself and do not start another Codex process. End with one separate message to me that holds only the text below, word for word:
 
-The request to paste then:
+Setup is done. Two steps for you:
+1. Restart Codex in the repository you want to work on.
+2. Then paste this request:
 "Use the module-assistant skill to set Segmently Modules up in this repository:
 - it has a module registry another tool or team already wrote: adopt it with the module-adopt skill;
 - it has code but no module registry: run segmently-modules setup, then map the code into modules and write their notes with the module-init skill;
