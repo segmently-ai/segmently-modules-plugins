@@ -72,9 +72,9 @@ def run(args) -> int:
                                standard_roles=not args.no_standard_roles)
     if not args.dry_run:
         creator.apply_create(ws, plan)
-    warnings = creator.keyword_warnings(plan["entry"]["keywords"])
+    warnings = creator.keyword_warnings(plan["entry"]["keywords"], ws, plan["module"])
     if not args.json:  # never blocks: --json carries them in data.warnings, stderr stays empty
-        for line in creator.warning_lines(plan["entry"]["keywords"]):
+        for line in creator.warning_lines(plan["entry"]["keywords"], ws, plan["module"]):
             print(f"segmently-modules: warning: {line}", file=sys.stderr)
     data = {"module": plan["module"], "files": sorted(plan["files"]), "entry": plan["entry"],
             "warnings": warnings, "dry_run": args.dry_run}

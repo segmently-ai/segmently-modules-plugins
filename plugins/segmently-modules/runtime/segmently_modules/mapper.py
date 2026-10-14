@@ -37,7 +37,11 @@ resolved imports whose source file is in the unit (0 without imports); owners 1 
 owned file of the unit has one identical owner set; isolation = 1 − the highest Jaccard with
 another unit (0 without history). `hints` (never a change to the candidates): `merge` for two
 units with Jaccard >= 0.6 that import each other, `split` for a unit whose files have disjoint
-owner sets. `unassigned`: the code files no candidate claims."""
+owner sets — or else, for a unit with more lines of code than `[init] split_hint_lines`
+(10000; 0: off), with `children`: {dir, lines} per code-holding subdirectory, a child that alone
+is over the limit replaced by its own subdirectories, at most 3 levels below the unit (0.3.0:
+a 65k-line Swift app was one candidate, with no import signal to split it). `unassigned`: the
+code files no candidate claims."""
 from __future__ import annotations
 
 import os
@@ -55,6 +59,8 @@ CONTAINERS = ("src", "lib", "app", "packages", "services", "apps")
 NAME_MAX = 48
 WEIGHTS = {"manifest": 0.4, "cohesion": 0.2, "owners": 0.2, "isolation": 0.2}
 SCANNED = (".py", ".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts", ".cts")
+SPLIT_HINT_LINES = 10000  # [init] split_hint_lines: a candidate with more lines of code gets a
+SPLIT_DEPTH = 3           # size `split` hint, its children at most this many levels below it
 JS_EXTENSIONS = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts")
 CODEOWNERS = (".github/CODEOWNERS", "CODEOWNERS", "docs/CODEOWNERS")
 _PY_IMPORT = re.compile(r"^[ \t]*import[ \t]+([\w.]+(?:[ \t]+as[ \t]+\w+)?"
@@ -374,6 +380,44 @@ def keywords(name: str, manifest: dict | None) -> list[str]:
     return [w for w in dict.fromkeys(words) if len(w) > 3 and w not in scope]
 
 
+def line_count(root, rel: str, texts: dict) -> int:
+    """The lines of a code file: from the scan's text when it kept one, else read (0: a
+    symlink, larger than `BIG`, unreadable or binary)."""
+    text = texts.get(rel)
+    if text is not None:
+        return len(text.splitlines())
+    path = PurePosixPath(rel)
+    full = root / str(path)
+    try:
+        if full.is_symlink() or full.stat().st_size > preflight.BIG:
+            return 0
+        data = full.read_bytes()
+    except OSError:
+        return 0
+    if b"\0" in data[:preflight.SNIFF]:
+        return 0
+    return len(data.decode("utf-8", errors="replace").splitlines())
+
+
+def split_children(base: str, sized: list[tuple[str, int]], limit: int,
+                   depth: int) -> list[dict]:
+    """{dir, lines} per code-holding subdirectory of `base`, in path order; one that alone holds
+    more than `limit` lines is replaced by its own subdirectories while `depth` allows and it
+    has two or more (files right in a directory never make a child)."""
+    groups: dict[str, list[tuple[str, int]]] = {}
+    for f, n in sized:
+        rest = f[len(base) + 1:]
+        if "/" in rest:
+            groups.setdefault(f"{base}/{rest.split('/', 1)[0]}", []).append((f, n))
+    out = []
+    for sub, members in sorted(groups.items()):
+        lines = sum(n for _, n in members)
+        inner = split_children(sub, members, limit, depth - 1) \
+            if lines > limit and depth > 1 else []
+        out += inner if len(inner) > 1 else [{"dir": sub, "lines": lines}]
+    return out
+
+
 def build(root, config: dict, files: list[str], manifests: list[dict],
           texts: dict | None = None) -> dict:
     """proposal.json's document; `texts`: the code texts the preflight scan already read."""
@@ -388,6 +432,7 @@ def build(root, config: dict, files: list[str], manifests: list[dict],
     touched = {u["dir"]: {i for i, commit in enumerate(history or [])
                           if any(f.startswith(u["dir"] + "/") for f in commit)} for u in found}
     candidates, hints = [], []
+    limit = config["init"].get("split_hint_lines", SPLIT_HINT_LINES)
     for unit, name in zip(found, unit_names):
         d = unit["dir"]
         own = [f for f in files if f.startswith(d + "/")]
@@ -427,6 +472,16 @@ def build(root, config: dict, files: list[str], manifests: list[dict],
             hints.append({"kind": "split", "candidates": [name],
                           "reason": f"its files have disjoint owner sets in CODEOWNERS: "
                                     + "; ".join(", ".join(sorted(s)) for s in sets)})
+        elif limit:
+            sized = [(f, line_count(root, f, texts)) for f in own if language(f)]
+            total = sum(n for _, n in sized)
+            children = split_children(d, sized, limit, SPLIT_DEPTH) if total > limit else []
+            if len(children) > 1:
+                hints.append({"kind": "split", "candidates": [name],
+                              "reason": f"{total} lines of code, more than [init] "
+                                        f"split_hint_lines {limit}: start from its "
+                                        f"subdirectories",
+                              "children": children})
     for i, a in enumerate(found):
         for b in found[i + 1:]:
             inter, union = jaccard(touched[a["dir"]], touched[b["dir"]])

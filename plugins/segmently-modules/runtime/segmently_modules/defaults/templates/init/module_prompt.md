@@ -10,6 +10,8 @@ nowhere else.
 - Code: ${paths} ${files_note}
 - Neighbours (modules its code imports from):
 ${neighbours}
+- The other modules of this repository — what they own is not this module's:
+${others}
 
 Files:
 ${files}
@@ -26,15 +28,21 @@ A JSON object with exactly these keys:
 
 - `description`: one sentence of ${description_min}–${description_max} characters — what the module does, why
   it exists, when a task belongs here;
-- `keywords`: at least ${min_keywords} distinct words a developer would type in a task about this
-  module (domain words, not file names). Give the words for what the module handles as a task
-  would name them, including the things and actions its `## Purpose` paragraph names, even where
-  the code names them differently (a payments module: `card`, `decline`, `charge`). Routing
-  matches whole words exactly, without stemming, so give the words in the forms tasks use:
-  single words, with the plural and verb forms of the key nouns (`suggestion`, `suggestions`,
-  `suggest`), and each key verb in every form tasks use — base, `-s`, `-ed`, `-ing` (`charge`,
-  `charges`, `charged`, `charging`); a phrase of several words only when developers write
-  exactly that phrase;
+- `keywords`: at least ${min_keywords} and at most ${max_keywords} distinct words a developer
+  would type in a task about this module — and about no other module. Give the words for what
+  the module handles as a task would name them, including the things and actions its
+  `## Purpose` paragraph names, even where the code names them differently (a payments module:
+  `card`, `decline`, `charge`). Routing ignores word endings (`-s`, `-es`, `-ed`, `-ing`), so
+  give one form per word (`charge`, not also `charges`, `charged`, `charging`; `score` and
+  `scoring` are one word, `suggest` and `suggestion` two); single words,
+  and a phrase of several words only when developers write exactly that phrase. Leave out:
+  - generic words that fit any module: ${generic_words} (a word of this module's own name is
+    fine);
+  - the things another module owns (the list above), even when this module stores, caches,
+    syncs or calls them: name one only when a task about it changes this module's code;
+  - words that read as the developer's own tools — `module`, `test`, `build`, `commit` —
+    unless this module is that tool.
+  A word only this module would answer beats a word many modules would;
 - `related_modules` (optional): edges `{"module": "<name>", "relation": "<relation>",
   "description": "<one sentence>"}` to the neighbours above or to other modules of the
   registry; a relation is one of: ${relations}.${ask_fields}

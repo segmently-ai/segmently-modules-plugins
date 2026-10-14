@@ -6,17 +6,20 @@ from the writers' `entry.json` files, and what the writers could not see from on
                                            new module in name order — {name, description,
                                            status: "active", keywords, context_files (the final
                                            paths), <asked fields>, related_modules?}
-  <config_dir>/init/reconcile.json         {edges, collisions, duplicates, judgement}
+  <config_dir>/init/reconcile.json         {edges, collisions, dropped, duplicates, judgement}
 
 Edges: the proposal's import edges between confirmed modules become `depends-on` edges ("imports
 from <m> (<n> import(s), init reconcile)"), one per direction; a writer's own edge to the same
-module (any relation) wins. Collisions: a keyword (any case) that two new modules or more hold
-belongs to the module with the most files (under its confirmed paths) whose path or text holds
-it as a whole word (a file counts once); another holder loses it from `keywords` only when
-none of its own files holds it (D14: a module whose code holds the word keeps it) — never a
-negative keyword, which would pull it out of every task that uses the word — unless that
-leaves it below `[create] min_keywords` (a `keyword-floor` judgement item) or the most files
-are a tie (a `keyword-tie` item: nothing is removed). Duplicates:
+module (any relation) wins. Collisions: a keyword that two new modules or more hold (any case; under `[match] normalize`
+any form, `word_groups`: `save` and `saving` are one collision) belongs to the module with the
+most files (under its confirmed paths) whose path or text holds one of its listed forms as a
+whole word (a file counts once; never a part of an identifier — see `holds`); another holder loses it from `keywords` only when none of its own files
+holds it (D14: a module whose code holds the word keeps it) — never a negative keyword, which
+would pull it out of every task that uses the word — unless that leaves it below `[create]
+min_keywords` (a `keyword-floor` judgement item) or the most files are a tie (a `keyword-tie`
+item: nothing is removed). A keyword NO holder's files hold is dropped from every holder the
+floor allows (`dropped`: {keyword, modules}; 0.3.0 — on a real run 68 of 76 ties were such
+words, left to a person one by one). Duplicates:
 a name defined in two confirmed modules or more, at least one of them new (a module already in
 the registry counts as the other) — Python top-level `def` / `class`, JS/TS
 `export function|class|const|interface|type` — never a name starting with `_`, a re-export,
@@ -35,10 +38,10 @@ from pathlib import PurePosixPath
 
 from segmently_modules.changes import glob_to_regex
 from segmently_modules.create import ask_fields
-from segmently_modules.match import term_pattern
 from segmently_modules.output import UsageError
 from segmently_modules.preflight import BIG, SNIFF
 from segmently_modules.store import serialize
+from segmently_modules.words import normalizing, term_pattern, word_groups
 
 TEST_FILE = re.compile(r"(?:^|/)(?:tests/|test_[^/]*\.py$|[^/]*_test\.py$"
                        r"|[^/]*\.(?:test|spec)\.[^/]+$)")
@@ -54,6 +57,8 @@ class Reconcile:
         self.registry_path = work.staging / "registry.json"
         self.report_path = self.flow.work / "reconcile.json"
         self.texts: dict[str, str | None] = {}
+        self.normalize = normalizing(work.ws.config["match"])
+        self.lowered: dict[str, str] = {}
 
     # --- inputs ---------------------------------------------------------------------------
 
@@ -127,40 +132,70 @@ class Reconcile:
                      "source": "imports"} for e in added]
         return sorted(out, key=lambda e: (e["from"], e["to"], e["source"]))
 
-    def collisions(self, new: dict, files: dict) -> tuple[list[dict], list[dict]]:
-        holders: dict[str, list[str]] = {}
-        for name, entry in new.items():
-            for kw in dict.fromkeys(k.lower() for k in entry["keywords"]):
-                holders.setdefault(kw, []).append(name)
+    def holds(self, rel: str, forms) -> bool:
+        """Whether file `rel` holds one of `forms` — a listed form of the word, whole, in its
+        path or its text: the evidence of 0.2.1, kept strict on purpose. Measured on the 76 ties
+        of a real run (2026-10-14): with every form of the word and the parts of identifiers
+        (`saveMeal`) as evidence, generic verbs looked owned by most modules — 8 words dropped,
+        not 68 — and `bought` went to the wrong module."""
+        if rel not in self.lowered:
+            self.lowered[rel] = (self.text(rel) or "").lower()
+        return any((rx := term_pattern(k)).search(rel.lower()) or rx.search(self.lowered[rel])
+                   for k in forms)
+
+    def collisions(self, new: dict, files: dict) -> tuple[list[dict], list[dict], list[dict]]:
+        """(rows, judgement, dropped) for every word two new modules or more hold (any case;
+        under `[match] normalize` any form: `save` and `saving` are one word)."""
+        pairs = [(m, k) for m in sorted(new) for k in new[m]["keywords"]]
+        groups = word_groups([k for _, k in pairs], self.normalize)
         floor = self.ws.config["create"]["min_keywords"]
-        rows, judgement = [], []
-        for kw in sorted(k for k, mods in holders.items() if len(mods) > 1):
-            mods = sorted(holders[kw])
-            rx = term_pattern(kw)
-            counts = {m: sum(1 for f in files[m] if rx.search(f.lower()) or (
-                (t := self.text(f)) is not None and rx.search(t.lower()))) for m in mods}
+        rows, judgement, dropped = [], [], []
+        shared = []
+        for members in groups:
+            forms = {k.lower() for k in members}
+            mods = sorted({m for m, k in pairs if k.lower() in forms})
+            if len(mods) > 1:
+                shared.append((sorted(forms)[0], forms, mods))
+        for kw, forms, mods in sorted(shared):
+            counts = {m: sum(1 for f in files[m] if self.holds(f, forms)) for m in mods}
             top = max(counts.values())
             owners = [m for m in mods if counts[m] == top]
+            if top == 0:  # no holder's code holds it: a word for every task, dropped from all
+                removed = []
+                for m in mods:
+                    if self.drop(new[m], forms, floor, kw, m, judgement):
+                        removed.append(m)
+                rows.append({"keyword": kw, "owner": None, "others": mods, "files": counts,
+                             "removed": removed})
+                if removed:
+                    dropped.append({"keyword": kw, "modules": removed})
+                continue
             if len(owners) > 1:
                 rows.append({"keyword": kw, "owner": None, "others": mods, "files": counts,
                              "removed": []})
                 judgement.append({"kind": "keyword-tie", "keyword": kw, "modules": owners,
                                   "files": counts})
                 continue
-            removed = []
-            for other in (m for m in mods if m != owners[0] and counts[m] == 0):
-                entry = new[other]  # a holder whose own files hold the keyword keeps it (D14)
-                keep = [k for k in entry["keywords"] if k.lower() != kw]
-                if len(set(keep)) < floor:
-                    judgement.append({"kind": "keyword-floor", "keyword": kw, "module": other,
-                                      "keywords": len(set(entry["keywords"]))})
-                    continue
-                entry["keywords"] = keep  # every case form of it; never a negative keyword
-                removed.append(other)
+            removed = [other for other in mods if other != owners[0] and counts[other] == 0
+                       # a holder whose own files hold the keyword keeps it (D14)
+                       and self.drop(new[other], forms, floor, kw, other, judgement)]
             rows.append({"keyword": kw, "owner": owners[0],
                          "others": [m for m in mods if m != owners[0]], "files": counts,
                          "removed": removed})
-        return rows, judgement
+        return rows, judgement, dropped
+
+    @staticmethod
+    def drop(entry: dict, forms: set, floor: int, kw: str, module: str,
+             judgement: list) -> bool:
+        """Remove every case and form of the word from `entry` — never a negative keyword —
+        unless that leaves it below `floor` (a `keyword-floor` judgement item instead)."""
+        keep = [k for k in entry["keywords"] if k.lower() not in forms]
+        if len(set(keep)) < floor:
+            judgement.append({"kind": "keyword-floor", "keyword": kw, "module": module,
+                              "keywords": len(set(entry["keywords"]))})
+            return False
+        entry["keywords"] = keep
+        return True
 
     def duplicates(self, files: dict, new: set[str]) -> list[dict]:
         """The names defined in two modules or more, at least one of them `new` (a name only
@@ -217,7 +252,7 @@ class Reconcile:
         files = self.module_files({m: confirmed[m] for m in sorted(state["modules"])
                                    if m in confirmed}, flow.files())
         edges = self.edges(new, confirmed)
-        collisions, judgement = self.collisions(new, {m: files[m] for m in new})
+        collisions, judgement, dropped = self.collisions(new, {m: files[m] for m in new})
         duplicates = self.duplicates(files, set(new))  # one created by hand counts: a row only
         judgement += [{"kind": "duplicate", "name": d["name"], "definitions": d["definitions"]}
                       for d in duplicates]
@@ -229,8 +264,8 @@ class Reconcile:
         registry = self.work.registry_modules()
         top = {k: v for k, v in self.work.registry_raw().items() if k != "modules"}
         doc = {**top, "modules": {**registry, **new}}
-        report = {"edges": edges, "collisions": collisions, "duplicates": duplicates,
-                  "judgement": judgement}
+        report = {"edges": edges, "collisions": collisions, "dropped": dropped,
+                  "duplicates": duplicates, "judgement": judgement}
         flow.mark(state, "reconcile", "running")
         text = serialize(doc)
         flow.write(self.registry_path, text)

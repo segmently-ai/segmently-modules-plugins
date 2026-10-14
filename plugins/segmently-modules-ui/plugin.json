@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "segmently-modules-ui",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "The Segmently Modules designer skill: prototypes, audits and reviews UI work against the designer docs of the modules it touches",
   "author": {
     "name": "Segmently Modules maintainers"

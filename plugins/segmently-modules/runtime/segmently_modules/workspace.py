@@ -10,7 +10,7 @@ from segmently_modules.output import UsageError
 from segmently_modules.registry import Registry, load_registry
 
 CONFIG_DIR = ".segmently-modules"
-LEGACY_CONFIG_DIR = ".modsys"  # modsys 0.1.x; the refusal goes in 0.3.0
+LEGACY_CONFIG_DIR = ".modsys"  # modsys 0.1.x; refused while teams still migrate (kept in 0.3)
 ROOT_MARKERS = (CONFIG_DIR, LEGACY_CONFIG_DIR, "modules/registry.json")  # the legacy one: refused
 
 

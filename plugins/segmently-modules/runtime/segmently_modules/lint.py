@@ -1,5 +1,5 @@
 """Registry lint. Codes: MS001-MS004, MS006-MS015 registry/field checks · MS005, MS016, MS017,
-MS041-MS043 the docs as files (segmently_modules.doc_checks) · MS020-MS022 keyword budgets and hygiene ·
+MS041-MS043 the docs as files (segmently_modules.doc_checks) · MS020-MS023 keyword budgets and hygiene ·
 MS030-MS032 doc budgets · MS040 component paths ·
 MS052 a [[code_map]] rule whose `module` is not in the registry · MS053 two [[code_map]] rules
 route one file to two different modules · MS054 (info) an active module that maps no code ·
@@ -38,6 +38,7 @@ from segmently_modules.skill_sync import read_marker
 from segmently_modules.skills import (AGENT_DIRS, EJECTED, SKILL_KEYS, behind_reason, declared_skills,
                            ejected_copies, ejected_symlinks, inside, pack_skills, read_ejected,
                            source_problem)
+from segmently_modules.words import generic_keywords
 from segmently_modules.workspace import Workspace
 
 SEVERITY_RANK = {"info": 0, "warning": 1, "error": 2}
@@ -118,11 +119,17 @@ def _line_count(path: Path) -> int:
         return sum(1 for _ in fh)
 
 
-def component_path(token: str) -> str | None:
+def component_path(token: str, exists=None) -> str | None:
     """The repository path a backticked token names (MS040's rule), else None: it holds a `/`,
     no space, no `*` and no URL; an import alias (`@…`) or a placeholder (`<`, `{`, `[`) is not
-    a path; `path:line` and `path#L3` name `path`."""
-    if token.strip().startswith("@") or any(c in token for c in "<{["):
+    a path; `path:line` and `path#L3` name `path`. With `exists` (path -> bool), a token that
+    names an existing path as a whole is that path first — a space, a `#` or a bracket in it
+    included (`App/Custom cells/Row.swift`, `App/onboarding-v#1-47.json`, `app/[id]/page.tsx`)."""
+    whole = token.strip()
+    if exists is not None and "/" in whole and "*" not in whole and "://" not in whole \
+            and not whole.startswith("@") and exists(whole):
+        return whole
+    if whole.startswith("@") or any(c in token for c in "<{["):
         return None
     candidate = re.split(r"[:#]", token.strip())[0]
     if "/" in candidate and " " not in candidate and "*" not in candidate and "://" not in token:
@@ -227,6 +234,10 @@ def lint_registry(ws, overlap: bool = True) -> list[Finding]:
             for kw in as_list(holder.get("keywords")):
                 if isinstance(kw, str) and not kw.strip():
                     add("MS022", "warning", label, "empty keyword matches every task")
+            for kw in generic_keywords(cfg, label, as_list(holder.get("keywords"))):
+                add("MS023", "info", label, f"keyword '{kw}' is a generic word: it matches many "
+                                            f"tasks — leave it out, or keep it if this module "
+                                            f"really owns the word")
     for kw, count in sorted(shared.items()):
         if count >= budgets["keyword_shared_warn"]:
             add("MS021", "info", "*", f"keyword {kw!r} shared by {count} modules")
@@ -251,7 +262,7 @@ def lint_registry(ws, overlap: bool = True) -> list[Finding]:
                     if not in_section or not line.startswith("|"):
                         continue
                     for token in _BACKTICK.findall(line):
-                        candidate = component_path(token)
+                        candidate = component_path(token, ws.exists)
                         if candidate and not ws.exists(candidate):
                             add("MS040", "warning", label,
                                 f"component path missing on disk: {candidate}", universal)

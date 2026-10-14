@@ -30,11 +30,15 @@ from segmently_modules.config import enabled_roles
 from segmently_modules.fields import value_matches
 from segmently_modules.output import UsageError
 from segmently_modules.store import atomic_write, open_store
+from segmently_modules.words import GENERIC_KEYWORDS as WORDS_GENERIC
+from segmently_modules.words import (distinct_words, generic_words, is_generic, name_words,
+                                     normalizing, word_groups)
 
 NAME = re.compile(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*$")
 BASE_ANSWERS = {"description", "keywords", "status", "tags", "roles"}
-# keywords that match too many tasks to route one (`create` warns; a hint, not a rule)
-GENERIC_KEYWORDS = ("common", "data", "helper", "info", "item", "list", "misc", "stuff", "util")
+# the plural hint (exact matching) never suggests one of these; `words.GENERIC_KEYWORDS` is
+# the whole list `create` warns about
+GENERIC_KEYWORDS = WORDS_GENERIC[:9]
 SHORT_KEYWORD = 3  # a keyword this long or shorter matches many tasks
 _WORD = re.compile(r"[a-z]{4,}")  # the plural hint applies to one lowercase word of 4+ letters
 
@@ -66,12 +70,20 @@ def counterpart(word: str) -> str:
     return word + "s"
 
 
-def keyword_notes(keywords: list[str]) -> list[tuple[str, str, tuple[str, str] | None]]:
-    """(kind, warning, (keyword, counterpart) for a plural hint) per keyword that may route
-    poorly — never a refusal: `short` (3 characters or fewer), `generic` (`GENERIC_KEYWORDS`),
-    or `plural`: a single lowercase word of 4+ letters whose plain singular / plural counterpart
-    is missing (matching is exact-token) and is not itself a generic word (`utils` never
-    suggests `util`)."""
+def keyword_notes(keywords: list[str], ws=None,
+                  name: str = "") -> list[tuple[str, str, tuple[str, str] | None]]:
+    """(kind, warning, (keyword, its pair) for a one-line hint) per keyword that may route
+    poorly — never a refusal: `short` (3 characters or fewer); `generic` (`words.generic_words`,
+    any form of one under `[match] normalize`; never a word of the module's own `name`); under
+    `normalize` `form`: a keyword that is a form of an earlier one (`saving` after `save`: one
+    form is enough), else `plural`: a single lowercase word of 4+ letters whose plain singular /
+    plural counterpart is missing (matching is exact) and is not one of the first nine generic
+    words (`utils` never suggests `util`). Then, once for the list, `too-many`: more distinct
+    words than `[create] max_keywords`."""
+    cfg = ws.config if ws is not None else {}
+    normalize = normalizing(cfg.get("match", {}))
+    generic, own = generic_words(cfg), name_words(name)
+    first_of = {k: g[0] for g in word_groups(keywords, normalize) for k in g[1:]}
     have = {k.strip() for k in keywords if isinstance(k, str)}
     out = []
     for keyword in dict.fromkeys(k for k in keywords if isinstance(k, str)):
@@ -79,9 +91,14 @@ def keyword_notes(keywords: list[str]) -> list[tuple[str, str, tuple[str, str] |
         if len(word) <= SHORT_KEYWORD:
             out.append(("short", f"keyword '{keyword}' is short ({len(word)} characters): it "
                                  f"matches many tasks — prefer a longer domain word", None))
-        elif word.lower() in GENERIC_KEYWORDS:
+        elif is_generic(word, generic, normalize, own):
             out.append(("generic", f"keyword '{keyword}' is a generic word: it matches many "
                                    f"tasks — prefer a domain word", None))
+        elif normalize:
+            if keyword in first_of:
+                out.append(("form", f"keyword '{keyword}' is a form of '{first_of[keyword]}': "
+                                    f"matching ignores word endings — one form is enough",
+                            (keyword, first_of[keyword])))
         elif _WORD.fullmatch(word):
             other = counterpart(word)
             if other not in have and other not in GENERIC_KEYWORDS:
@@ -89,26 +106,39 @@ def keyword_notes(keywords: list[str]) -> list[tuple[str, str, tuple[str, str] |
                 out.append(("plural", f"keyword '{keyword}' has no {form} '{other}': matching "
                                       f"is exact, so a task that says '{other}' does not match "
                                       f"it — add it if tasks use it", (keyword, other)))
+    limit = cfg.get("create", {}).get("max_keywords")
+    count = distinct_words(keywords, normalize)
+    if limit is not None and count > limit:
+        out.append(("too-many", f"{count} keywords > [create] max_keywords {limit}: keep the "
+                                f"words that point to this module and no other", None))
     return out
 
 
-def keyword_warnings(keywords: list[str]) -> list[str]:
-    """`data.warnings` of `create`: one warning per keyword (`keyword_notes`), keyword order."""
-    return [text for _, text, _ in keyword_notes(keywords)]
+def keyword_warnings(keywords: list[str], ws=None, name: str = "") -> list[str]:
+    """`data.warnings` of `create`: one warning per keyword (`keyword_notes`), keyword order,
+    then the one for too many words."""
+    return [text for _, text, _ in keyword_notes(keywords, ws, name)]
 
 
-def warning_lines(keywords: list[str]) -> list[str]:
-    """The text-mode stderr lines: each short and generic warning on its own line, then ONE
-    line for every plural hint of the run (the count, the first three pairs, `--json` for the
-    rest)."""
-    notes = keyword_notes(keywords)
-    lines = [text for kind, text, _ in notes if kind != "plural"]
-    pairs = [pair for kind, _, pair in notes if kind == "plural"]
-    if pairs:
-        shown = ", ".join(f"{a} → {b}" for a, b in pairs[:3])
-        more = f" and {len(pairs) - 3} more" if len(pairs) > 3 else ""
-        lines.append(f"{len(pairs)} keyword(s) without their singular / plural form (matching "
-                     f"is exact: add the form tasks use): {shown}{more} — --json lists each")
+HINT_LINES = {  # kind: the one stderr line for all of a run's pairs of that kind
+    "plural": "keyword(s) without their singular / plural form (matching is exact: add the "
+              "form tasks use)",
+    "form": "keyword(s) that are a form of another keyword (matching ignores word endings: one "
+            "form is enough)"}
+
+
+def warning_lines(keywords: list[str], ws=None, name: str = "") -> list[str]:
+    """The text-mode stderr lines: each short, generic and too-many warning on its own line,
+    then ONE line for every plural (or form) hint of the run (the count, the first three pairs,
+    `--json` for the rest)."""
+    notes = keyword_notes(keywords, ws, name)
+    lines = [text for kind, text, _ in notes if kind not in HINT_LINES]
+    for kind, label in HINT_LINES.items():
+        pairs = [pair for k, _, pair in notes if k == kind]
+        if pairs:
+            shown = ", ".join(f"{a} → {b}" for a, b in pairs[:3])
+            more = f" and {len(pairs) - 3} more" if len(pairs) > 3 else ""
+            lines.append(f"{len(pairs)} {label}: {shown}{more} — --json lists each")
     return lines
 
 

@@ -16,7 +16,7 @@ An AI coding agent is an excellent worker with amnesia and a memory of limited s
 3. it brings the notes up to date when the work is done;
 4. it keeps the notes per role, so the agent reads only the notes it needs right now: its memory is limited.
 
-The plugins: `segmently-modules` (the core skills and the `segmently-modules` command line), `segmently-modules-ui` (the designer skill) and `segmently-modules-qa` (the acceptance-criteria skills). This branch: `stable`, segmently-modules 0.2.1. The engine, its docs and its issues: https://github.com/segmently-ai/segmently-modules.
+The plugins: `segmently-modules` (the core skills and the `segmently-modules` command line), `segmently-modules-ui` (the designer skill) and `segmently-modules-qa` (the acceptance-criteria skills). This branch: `stable`, segmently-modules 0.3.0. The engine, its docs and its issues: https://github.com/segmently-ai/segmently-modules.
 
 ### Install with one prompt
 
@@ -44,7 +44,7 @@ Setup is done. Two steps for you:
 - it has a module registry another tool or team already wrote: adopt it with the module-adopt skill;
 - it has code but no module registry: run segmently-modules setup, then map the code into modules and write their notes with the module-init skill;
 - it is a new repository: run segmently-modules setup, then the module-create skill for the first module.
-segmently-modules setup also adds the Segmently Modules section to CLAUDE.md and AGENTS.md, so every session knows the skills and the module system."
+The setup also adds the Segmently Modules section to CLAUDE.md and AGENTS.md, so every session knows the skills and the module system."
 ```
 
 **Codex**
@@ -56,7 +56,7 @@ Marketplace: segmently-ai/segmently-modules-plugins on ref stable. Plugin: segme
 
 Run the steps in order and show me the exact output of every command:
 1. git --version and python3 --version — git must answer, and Python must be 3.9 or newer. On macOS, if either one asks for the command line developer tools, run xcode-select --install, ask me to finish the installer it opens, then run both again. If Python is still missing or older than 3.9, tell me how to get Python 3.9 or newer on this operating system and stop there.
-2. npm install -g @segmently/modules, then segmently-modules --version — it must print segmently-modules and a version. Without npm, run uv tool install git+https://github.com/segmently-ai/segmently-modules.git@v0.2.1 instead.
+2. npm install -g @segmently/modules, then segmently-modules --version — it must print segmently-modules and a version. Without npm, run uv tool install git+https://github.com/segmently-ai/segmently-modules.git@v0.3.0 instead.
 3. codex plugin marketplace add segmently-ai/segmently-modules-plugins --ref stable
    codex plugin add segmently-modules@segmently-modules
    If the marketplace is already there, run codex plugin marketplace upgrade segmently-modules and then codex plugin add segmently-modules@segmently-modules again.
@@ -70,7 +70,7 @@ Setup is done. Two steps for you:
 - it has a module registry another tool or team already wrote: adopt it with the module-adopt skill;
 - it has code but no module registry: run segmently-modules setup, then map the code into modules and write their notes with the module-init skill;
 - it is a new repository: run segmently-modules setup, then the module-create skill for the first module.
-segmently-modules setup also adds the Segmently Modules section to CLAUDE.md and AGENTS.md, so every session knows the skills and the module system."
+The setup also adds the Segmently Modules section to CLAUDE.md and AGENTS.md, so every session knows the skills and the module system."
 ```
 
 Nothing goes into `CLAUDE.md` by hand: `segmently-modules setup` (the first request above runs it) adds a short "Module docs (Segmently Modules)" section to `CLAUDE.md` (Claude Code) and `AGENTS.md` (Codex, Cursor, Copilot; Gemini CLI reads `GEMINI.md`). It tells every session to read a task's notes before the work (`segmently-modules context`), to bring them up to date after it (`segmently-modules sync-instructions`, the `module-sync` skill), to start module work with `segmently-modules next`, and it lists the skills. `segmently-modules agents-md` refreshes the section; the text around it stays yours.
@@ -78,7 +78,7 @@ Nothing goes into `CLAUDE.md` by hand: `segmently-modules setup` (the first requ
 ### Install by hand
 
 - Claude Code: `claude plugin marketplace add segmently-ai/segmently-modules-plugins#stable`, then `claude plugin install segmently-modules@segmently-modules` (and `segmently-modules-ui@segmently-modules`, `segmently-modules-qa@segmently-modules`).
-- Codex: install the command line first — `npm install -g @segmently/modules`, `uv tool install git+https://github.com/segmently-ai/segmently-modules.git@v0.2.1` or `pipx install git+https://github.com/segmently-ai/segmently-modules.git@v0.2.1` — then `codex plugin marketplace add segmently-ai/segmently-modules-plugins --ref stable` and `codex plugin add segmently-modules@segmently-modules`.
+- Codex: install the command line first — `npm install -g @segmently/modules`, `uv tool install git+https://github.com/segmently-ai/segmently-modules.git@v0.3.0` or `pipx install git+https://github.com/segmently-ai/segmently-modules.git@v0.3.0` — then `codex plugin marketplace add segmently-ai/segmently-modules-plugins --ref stable` and `codex plugin add segmently-modules@segmently-modules`.
 - The dev channel: `#dev` / `--ref dev` and the marketplace `segmently-modules-dev`.
 
 Then run `/reload-plugins` in Claude Code, or start a new session: an agent picks a newly installed plugin up only then (Codex: a new session).
