@@ -36,16 +36,18 @@ on one person's file. With a config present, the inferred keys go to
 to a new `<config_dir>/config.toml`; `--dry-run` writes nothing. Lint then runs in report mode
 against every layer merged with what was inferred (exit 0 either way). The registry, its docs
 and every file outside the config dir are never written."""
+from __future__ import annotations
+
 import contextlib
 import json
 import os
 import re
 import tempfile
-import tomllib
 from collections import Counter
 from dataclasses import asdict
 from pathlib import Path
 
+from segmently_modules._toml import tomllib
 from segmently_modules.changes import DEPENDENCY_DIRS
 from segmently_modules.code_map_cmd import _toml_string
 from segmently_modules.config import REGISTRY_LAYOUTS, load_config

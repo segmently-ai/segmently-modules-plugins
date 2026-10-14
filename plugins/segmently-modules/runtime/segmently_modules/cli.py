@@ -1,15 +1,22 @@
+from __future__ import annotations
+
 import argparse
 import os
 import sys
 from pathlib import Path
 
 from segmently_modules import __version__
-from segmently_modules import (adopt_cmd, agents_md_cmd, catalog_cmd, choose_cmd, ci_cmd, code_map_cmd, coverage_cmd, create_cmd,
+from segmently_modules.output import reserve_stderr
+
+reserve_stderr()  # fd 2 closed at start: hold it before the verbs' imports open a file there
+
+from segmently_modules import (adopt_cmd, agents_md_cmd, catalog_cmd, choose_cmd, ci_cmd, code_map_cmd, coverage_cmd, create_cmd,  # noqa: E402
                     eject_cmd, eval_cmd, hooks_cmd, index_cmd, init_cmd, lint, match,
                     migrate_cmd, next_cmd, packs_cmd, pipeline, proposals_cmd, query,
                     registry_cmd, roles_cmd, schema_cmd, setup_cmd, sync_cmd,
                     sync_instructions_cmd, templates_cmd)
-from segmently_modules.output import EXIT_INTERRUPTED, EXIT_OK, EXIT_USAGE, UsageError, clear_notes, flush_notes, quiet_streams
+from segmently_modules.output import (EXIT_INTERRUPTED, EXIT_OK, EXIT_USAGE, UsageError,  # noqa: E402
+                                      clear_notes, flush_notes, quiet_streams)
 
 COMMANDS: list = [init_cmd, schema_cmd, match, query, lint, registry_cmd, index_cmd,
                   proposals_cmd, hooks_cmd, sync_cmd, create_cmd, migrate_cmd, pipeline,

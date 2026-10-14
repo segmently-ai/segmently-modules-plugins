@@ -10,9 +10,11 @@
   files TARGET            every repository file (git-tracked + new, not ignored; no coverage
                           filters) that maps to TARGET, with its mapping sources per file:
                           `docs`, `code_pointer:<field>`, `code_map:<id>`"""
-import json
-import tomllib
+from __future__ import annotations
 
+import json
+
+from segmently_modules._toml import tomllib
 from segmently_modules.changes import repo_files, require_work_tree, routes, rule_routes_to, target_names
 from segmently_modules.config import discover_packs, read_toml, validate_layer
 from segmently_modules.output import EXIT_OK, UsageError, emit

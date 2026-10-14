@@ -3,6 +3,8 @@ and `init finish` the staging registry is the registry, each new module's stagin
 their final paths (`Workspace.overlay`) and the `[[code_map]]` rules `finish` will append
 (`init-<module>`: the module's confirmed paths, when `<config_dir>/config.toml` exists) are a
 config layer. Nothing is moved; `init verify` and `segmently-modules eval routing` read the result."""
+from __future__ import annotations
+
 import json
 
 from segmently_modules.config import load_config

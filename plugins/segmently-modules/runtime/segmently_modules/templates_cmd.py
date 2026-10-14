@@ -9,6 +9,8 @@ override.
   override TEMPLATE  copy the winning template's text to
                      `<config_dir>/overrides/templates/TEMPLATE`, where it wins from then on;
                      an existing override is never replaced (edit it instead)"""
+from __future__ import annotations
+
 import os
 from pathlib import Path, PurePosixPath
 

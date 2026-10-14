@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 
 from segmently_modules.output import EXIT_OK, UsageError, emit

@@ -34,6 +34,8 @@ the git identity, signing), push or `gh` records `pr: "pending"` and exits 1; `i
 --open-pr` retries only what is left — back on the branch, never a second branch, commit or
 push. A step done but not recorded (a kill) is recognised: a commit on the branch with the
 title and nothing of its paths left to commit, a pull request `gh` says already exists."""
+from __future__ import annotations
+
 import contextlib
 import json
 import os

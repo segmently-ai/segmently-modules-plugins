@@ -5,6 +5,8 @@ and `SEGMENTLY_MODULES_AGENT_TIMEOUT` (seconds, 1 to 3600, default 300). An `[ag
 file — team, personal or pack — is refused, so no committed file can make the engine run an
 agent command, whatever the file system or git say about its name. The engine holds no model, no
 key and no network code: whatever the command does, it does with the user's own credentials."""
+from __future__ import annotations
+
 import json
 import os
 import re

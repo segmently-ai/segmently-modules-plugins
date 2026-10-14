@@ -38,6 +38,8 @@ owned file of the unit has one identical owner set; isolation = 1 − the highes
 another unit (0 without history). `hints` (never a change to the candidates): `merge` for two
 units with Jaccard >= 0.6 that import each other, `split` for a unit whose files have disjoint
 owner sets. `unassigned`: the code files no candidate claims."""
+from __future__ import annotations
+
 import os
 import re
 import subprocess

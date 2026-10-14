@@ -13,6 +13,8 @@ Template resolution (first hit wins), for `MODULE.md`, `roles/<role>.md` and `ag
 "engine-fallback": a missing engine file stays "engine" and reading it fails (`workorder`).
 Templates use `${name}` placeholders: name, title, description, status, keywords, parent,
 role, role_description, article (`a` or `an` before the role)."""
+from __future__ import annotations
+
 import contextlib
 import errno
 import json

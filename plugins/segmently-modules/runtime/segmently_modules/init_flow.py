@@ -24,6 +24,8 @@ The work directory is `<config_dir>/init/` (git-ignored by `segmently-modules in
 Every write is a temp file + an atomic rename, so an interrupted phase leaves no partial output:
 a phase whose status is not `done` re-runs from its start (`init resume`, or `init map` again).
 `map` and `confirm` never prompt."""
+from __future__ import annotations
+
 import contextlib
 import hashlib
 import json

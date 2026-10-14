@@ -25,6 +25,8 @@ added to EXISTING modules (a team's new role, or a role a newer engine brings).
         `unchanged`). Refused before any write: a target with the role's doc on disk (a
         registered path whose file is gone is replaced by the mark). One registry lock, all or
         nothing, as add."""
+from __future__ import annotations
+
 import argparse
 import contextlib
 import copy
